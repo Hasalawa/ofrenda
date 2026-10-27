@@ -1,0 +1,9 @@
+ofrenda.json
+ofrenda.html
+__pycache__/
+*.egg-info/
+dist/
+build/
+.pytest_cache/
+.ruff_cache/
+.venv/

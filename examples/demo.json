@@ -1,0 +1,28 @@
+{
+  "people": [
+    {
+      "slug": "abuela-rosa",
+      "name": "Abuela Rosa (demo)",
+      "years": "1941 – 2019",
+      "photo": "",
+      "favorites": {
+        "foods": ["pan de muerto", "champurrado", "mole poblano"],
+        "songs": ["Cielito Lindo"],
+        "flowers": ["cempasúchil (marigolds)"]
+      },
+      "stories": [
+        {
+          "title": "The night the mole burned",
+          "text": "Every November she made mole for forty relatives. One year she forgot the chocolate on the stove and the whole street smelled burnt. She laughed so hard she cried, then started again from scratch and fed everyone at midnight.",
+          "added": "2026-10-20"
+        },
+        {
+          "title": "Marigold petals to the door",
+          "text": "She always scattered marigold petals from the garden gate to the front door so the spirits would find their way home. She said the smell was a map only the dead could read.",
+          "added": "2026-10-20"
+        }
+      ],
+      "remembrance": "Abuela Rosa filled every November with mole, laughter and marigold petals. Even when dinner burned, she began again and fed everyone at midnight. Tonight a trail of petals lights the way home, and pan de muerto waits on the table for her."
+    }
+  ]
+}
