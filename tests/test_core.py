@@ -82,3 +82,16 @@ def test_ask_uses_model_with_retrieved_context(demo, monkeypatch):
 def test_ask_unknown_topic_does_not_hallucinate(demo, monkeypatch):
     monkeypatch.setattr(llm, "generate", lambda *a, **k: pytest.fail("model must not be called"))
     assert "No story about that" in cli.ask(demo["people"][0], "stock market")
+
+
+def test_speak_flag_and_listen_button(demo, monkeypatch, tmp_path):
+    from ofrenda import voice
+
+    spoken = []
+    monkeypatch.setattr(voice, "speak", spoken.append)
+    monkeypatch.setattr(llm, "generate", lambda *a, **k: "A kind remembrance.")
+    f = tmp_path / "d.json"
+    f.write_text(json.dumps(demo), encoding="utf-8")
+    cli.main(["--data", str(f), "remember", "Abuela Rosa", "--speak"])
+    assert spoken == ["A kind remembrance."]
+    assert "listen(this)" in render_html(demo)

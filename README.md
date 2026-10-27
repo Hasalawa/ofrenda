@@ -30,6 +30,7 @@ ofrenda add-story  "Abuela Rosa" --title "The night the mole burned" --text "She
 ofrenda transcribe "Abuela Rosa" recording.wav --title "Her childhood"   # offline Whisper
 ofrenda remember   "Abuela Rosa"                       # writes a remembrance from your stories
 ofrenda ask        "Abuela Rosa" "Why did the mole burn?"
+ofrenda remember "Abuela Rosa" --speak                 # read aloud, offline (pip install -e ".[voice]")
 ofrenda build --out ofrenda.html                       # one self-contained page; print it or share it
 ```
 

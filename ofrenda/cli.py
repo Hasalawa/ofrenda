@@ -7,7 +7,7 @@ import os
 import sys
 from pathlib import Path
 
-from . import __version__, llm, retrieve, store
+from . import __version__, llm, retrieve, store, voice
 from .render import render_html
 
 SYSTEM = (
@@ -105,10 +105,12 @@ def build_parser() -> argparse.ArgumentParser:
 
     a = sub.add_parser("remember")
     a.add_argument("name")
+    a.add_argument("--speak", action="store_true", help="read the result aloud (offline)")
 
     a = sub.add_parser("ask")
     a.add_argument("name")
     a.add_argument("question")
+    a.add_argument("--speak", action="store_true", help="read the answer aloud (offline)")
 
     a = sub.add_parser("build")
     a.add_argument("--out", default="ofrenda.html")
@@ -141,8 +143,13 @@ def main(argv: list[str] | None = None) -> int:
         person = _need(data, args.name)
         person["remembrance"] = remember(person)
         print(person["remembrance"])
+        if args.speak:
+            voice.speak(person["remembrance"])
     elif args.cmd == "ask":
-        print(ask(_need(data, args.name), args.question))
+        answer = ask(_need(data, args.name), args.question)
+        print(answer)
+        if args.speak:
+            voice.speak(answer)
         return 0
     elif args.cmd == "build":
         base = Path(args.data).resolve().parent

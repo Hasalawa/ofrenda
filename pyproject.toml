@@ -13,6 +13,7 @@ dependencies = []
 
 [project.optional-dependencies]
 audio = ["faster-whisper>=1.0"]
+voice = ["pyttsx3>=2.90"]
 dev = ["pytest>=8", "ruff>=0.6"]
 
 [project.scripts]

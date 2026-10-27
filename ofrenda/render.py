@@ -34,6 +34,9 @@ h2{margin:0;color:var(--marigold);font-size:1.9rem}
  margin-left:.5rem;filter:drop-shadow(0 0 8px #ffb300)}
 @keyframes flick{0%{transform:scale(1,1) rotate(-3deg)}50%{transform:scale(.9,1.1) rotate(2deg)}
  100%{transform:scale(1.05,.95) rotate(-1deg)}}
+.listen{background:none;border:1px solid var(--marigold);color:var(--marigold);border-radius:999px;
+ padding:.25rem .9rem;cursor:pointer;font:inherit;margin-bottom:.8rem}
+.listen:hover{background:#f5a30033}
 .remembrance{font-size:1.15rem;border-left:4px solid var(--deep);padding-left:1rem;margin:1.2rem 0}
 .favs{display:flex;gap:.5rem;flex-wrap:wrap;margin:.8rem 0}
 .chip{background:#f5a30022;border:1px solid var(--marigold);border-radius:999px;padding:.2rem .8rem;font-size:.95rem}
@@ -78,6 +81,7 @@ def render_html(data: dict, base: Path | None = None, title: str = "Ofrenda") ->
         )
         remembrance = (
             f'<p class="remembrance">{escape(person["remembrance"])}</p>'
+            '<button class="listen" onclick="listen(this)">&#128266; Listen</button>'
             if person.get("remembrance")
             else ""
         )
@@ -97,5 +101,12 @@ def render_html(data: dict, base: Path | None = None, title: str = "Ofrenda") ->
 <div class="sub">Those we remember never really leave.</div></header>
 <div class="papel"></div><main>{body}</main>
 <footer>Written locally with open-weight models. These memories never left this machine.</footer>
+<script>
+function listen(btn){{
+  var s=window.speechSynthesis; if(!s){{btn.textContent="Voice not supported";return;}}
+  if(s.speaking){{s.cancel();return;}}
+  s.speak(new SpeechSynthesisUtterance(btn.previousElementSibling.textContent));
+}}
+</script>
 </body></html>
 """
