@@ -27,6 +27,8 @@ def tokens(text: str) -> set[str]:
 
 def top_stories(person: dict, question: str, k: int = 3) -> list[dict]:
     q = tokens(question)
+    if not q:  # "tell me about her": no keywords, so use the latest stories
+        return person["stories"][-k:]
     scored = []
     for story in person["stories"]:
         score = len(q & tokens(story["title"] + " " + story["text"]))

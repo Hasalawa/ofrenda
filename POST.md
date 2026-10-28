@@ -8,7 +8,7 @@ tags: devchallenge, hf26challenge
 
 ## What I Built
 
-**Ofrenda** is a local-first virtual ofrenda for Día de los Muertos. You write down the stories of people you miss, add their favorite foods, songs and flowers, and an open-weight model running on your own machine helps you turn them into a remembrance. You can also ask questions ("Why did the mole burn?") and get answers grounded **only** in the stories you wrote. It then builds one self-contained, candle-lit, printable HTML page.
+**Ofrenda** is a local-first virtual ofrenda for Día de los Muertos. You write down the stories of people you miss, add their favorite foods, songs and flowers, and an open-weight model running on your own machine helps you turn them into a remembrance. You can also ask questions ("Why did the mole burn?") and get answers grounded **only** in the stories you wrote. `ofrenda serve` opens a candle-lit altar in the browser (falling marigold petals, papel picado, flickering candles) where you talk with a gentle AI companion whose answers stream in live and can be read aloud. It can also export one self-contained, printable HTML page.
 
 I read "Ghost in the Machine" gently: not a ghost that haunts, but the people who stay with us through the stories we keep. Two design rules came from that:
 
@@ -27,6 +27,7 @@ I read "Ghost in the Machine" gently: not a ghost that haunts, but the people wh
 
 - **Model:** any open-weight model served by [Ollama](https://ollama.com) (default `llama3.2:3b`, switch with `OFRENDA_MODEL`).
 - **Retrieval:** a tiny keyword matcher over your stories, so a 3B model on a laptop only sees what matters.
+- **Web app:** a zero-dependency Python server bound to `127.0.0.1` with a streaming `/api/ask`, and a single offline HTML page (no CDN, no tracking).
 - **Voice (optional):** `faster-whisper` transcribes a recorded family story fully offline.
 - **Core:** Python standard library only, one JSON file for data, one HTML file for output.
 - **Graceful fallback:** with no model running, `remember` and `ask` still work using templates and your own stories.

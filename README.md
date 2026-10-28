@@ -14,6 +14,17 @@ on your own machine. No account, no cloud, no internet needed.
 - **Works with no model.** If Ollama is not running, `remember` and `ask` fall back to simple templates and your stories, so the tool never breaks.
 - **Zero dependencies** for the core (Python standard library only). Data is one JSON file you own.
 
+## The interactive ofrenda
+
+```bash
+ofrenda serve          # opens http://localhost:8765
+```
+
+A candle-lit altar in your browser: falling marigold petals, papel picado, a photo frame with
+flickering candles. Click someone to **talk** with a gentle AI companion (answers stream in live
+and can be read aloud), browse their **stories**, add **offerings**, and light a candle. The server
+only listens on `127.0.0.1`, so nothing leaves your computer.
+
 ## Quick start
 
 ```bash
@@ -24,7 +35,7 @@ ollama pull llama3.2:3b            # any model works: set OFRENDA_MODEL=qwen2.5:
 pip install -e .                    # or: pip install -e ".[audio]" for offline voice transcription
 
 # 3. use it
-ofrenda add-person "Abuela Rosa" --years "1941-2019" --photo rosa.jpg
+ofrenda add-person "Abuela Rosa" --years "1941-2019" --relation grandmother --photo rosa.jpg
 ofrenda add-fav    "Abuela Rosa" food "pan de muerto"
 ofrenda add-story  "Abuela Rosa" --title "The night the mole burned" --text "She forgot the chocolate..."
 ofrenda transcribe "Abuela Rosa" recording.wav --title "Her childhood"   # offline Whisper

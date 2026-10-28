@@ -38,14 +38,18 @@ def find(data: dict, name: str) -> dict | None:
     return None
 
 
-def add_person(data: dict, name: str, years: str = "", photo: str = "") -> dict:
+def add_person(
+    data: dict, name: str, years: str = "", photo: str = "", relation: str = ""
+) -> dict:
     if find(data, name):
         raise ValueError(f"{name!r} already exists")
     person = {
         "slug": slugify(name),
         "name": name,
         "years": years,
+        "relation": relation,
         "photo": photo,
+        "candles": 0,
         "favorites": {"foods": [], "songs": [], "flowers": []},
         "stories": [],
         "remembrance": "",
