@@ -1,0 +1,27 @@
+sequenceDiagram
+  autonumber
+  actor You
+  participant B as 🌐 Browser
+  participant S as 🐍 Ofrenda server
+  participant W as 🎧 Whisper (local)
+  participant L as 🦙 Ollama (local)
+  You->>B: speak, then pause
+  B->>B: detect the end of the sentence
+  B->>S: POST /api/transcribe (16 kHz WAV)
+  S->>W: transcribe
+  W-->>S: "Tell me about the red notebook"
+  S-->>B: text
+  B->>S: POST /api/ask (question + recent turns)
+  S->>S: find matching stories
+  alt no story matches
+    S-->>B: "I have no story about that yet"
+    B-->>You: speaks it
+  else stories found
+    S->>L: grounded prompt (stories only)
+    loop while the model writes
+      L-->>S: next words
+      S-->>B: next words
+      B-->>You: speaks each finished sentence
+    end
+  end
+  Note over B: mic is paused while it speaks,<br/>then it listens again

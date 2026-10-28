@@ -1,0 +1,18 @@
+flowchart TB
+  you(["🧑 You: type, speak, listen"])
+  cloud["☁️ Cloud AI services<br/>not used, not needed"]
+  subgraph PC["🖥️  YOUR COMPUTER  ·  nothing leaves this box"]
+    BR["🌐 <b>Browser</b><br/>🕯️ altar and chat  ·  🎤 voice detector  ·  🔊 local voice"]
+    SV["🐍 <b>Ofrenda server</b><br/>127.0.0.1 only  ·  REST API  ·  story finder"]
+    STT["🎧 <b>Whisper</b><br/>speech to text<br/><i>open source</i>"]
+    LLM["🦙 <b>Ollama</b><br/>open-weight model<br/><i>open source</i>"]
+    DB[("📒 <b>ofrenda.json</b><br/>stories and photos<br/><i>a file you own</i>")]
+  end
+  you <--> BR
+  BR <-- "text · audio · streamed words" --> SV
+  SV -- "audio" --> STT
+  SV -- "grounded prompt" --> LLM
+  SV <-- "read / write" --> DB
+  cloud ~~~ you
+  classDef off fill:#2a1030,stroke:#e0357a,stroke-dasharray:5 4,color:#d9a8c0;
+  class cloud off;

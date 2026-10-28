@@ -1,0 +1,7 @@
+flowchart LR
+  push(["⬆️ git push"]) --> lint["🧹 ruff"]
+  lint --> test["🧪 pytest<br/>Python 3.10 · 3.11 · 3.12 · 3.13"]
+  test --> smoke["💨 CLI smoke test"]
+  smoke --> pkg["📦 build package"]
+  pkg -- "tag v*" --> rel["🚀 GitHub Release"]
+  push -- "main" --> pg["🏗️ build demo page"] --> dep["🌍 GitHub Pages"]

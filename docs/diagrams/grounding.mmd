@@ -1,0 +1,12 @@
+flowchart TD
+  Q(["❓ Your question"]) --> K{"Does any story share<br/>words with it?"}
+  K -- "no" --> N["💬 “I have no story about that yet.”<br/><b>The model is never called.</b>"]
+  K -- "yes" --> P["📝 Build the prompt<br/>top 3 stories + last few turns"]
+  P --> R["🛡️ Rules: use ONLY these stories ·<br/>speak ABOUT them, never AS them"]
+  R --> M["🦙 Local model streams an answer"]
+  M --> O(["✨ Words appear and are spoken"])
+  N --> E(["Add a story and ask again"])
+  classDef good fill:#3a1d5a,stroke:#ffb000,color:#fff3dc;
+  classDef stop fill:#4a1530,stroke:#e0357a,color:#fff3dc;
+  class P,R,M,O good;
+  class N,E stop;
