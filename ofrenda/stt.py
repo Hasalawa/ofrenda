@@ -10,6 +10,7 @@ import importlib.util
 import io
 import os
 import threading
+import wave
 
 _model = None
 _lock = threading.Lock()
@@ -49,11 +50,30 @@ def warmup() -> None:
     _load()
 
 
+def wav_to_array(wav: bytes):
+    """Decode our own 16 kHz mono 16-bit WAV with the standard library.
+
+    Whisper can then take a plain float array, so we never depend on the audio decoder (PyAV)
+    that ships with faster-whisper, whose version differs between computers.
+    """
+    import numpy as np
+
+    try:
+        with wave.open(io.BytesIO(wav), "rb") as f:
+            if (f.getnchannels(), f.getsampwidth(), f.getframerate()) != (1, 2, 16000):
+                raise ValueError("expected 16 kHz mono 16-bit WAV")
+            frames = f.readframes(f.getnframes())
+    except (wave.Error, EOFError) as exc:
+        raise ValueError(f"not a valid WAV file: {exc}") from exc
+    return np.frombuffer(frames, dtype=np.int16).astype(np.float32) / 32768.0
+
+
 def transcribe(wav: bytes) -> str:
     """Turn 16 kHz mono WAV bytes into text. Returns '' when nothing was said."""
+    audio = wav_to_array(wav)
     model = _load()
     segments, _ = model.transcribe(
-        io.BytesIO(wav),
+        audio,
         language="en",
         beam_size=1,
         vad_filter=True,

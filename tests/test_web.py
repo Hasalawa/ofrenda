@@ -116,3 +116,22 @@ def test_spoken_prompt_is_short_and_follow_ups_keep_context():
     follow = cli.ask_prompt(person, "and then?", history=history)
     assert follow and "forgot the chocolate" in follow and "Companion: It burned." in follow
     assert cli.ask_prompt(person, "stock market") is None
+
+
+def test_wav_decoding_does_not_need_pyav():
+    np = pytest.importorskip("numpy")
+    import io
+    import wave
+
+    from ofrenda import stt
+
+    buf = io.BytesIO()
+    with wave.open(buf, "wb") as f:
+        f.setnchannels(1)
+        f.setsampwidth(2)
+        f.setframerate(16000)
+        f.writeframes(np.array([0, 16384, -16384], dtype="<i2").tobytes())
+    out = stt.wav_to_array(buf.getvalue())
+    assert out.dtype == np.float32 and out.tolist() == [0.0, 0.5, -0.5]
+    with pytest.raises(ValueError):
+        stt.wav_to_array(b"RIFF....not a wav")
