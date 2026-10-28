@@ -2,13 +2,23 @@
   "people": [
     {
       "slug": "abuela-rosa",
-      "name": "Abuela Rosa (demo)",
+      "name": "Abuela Rosa",
       "years": "1941 – 2019",
-      "photo": "",
+      "relation": "grandmother",
+      "photo": "photos/abuela-rosa.jpg",
+      "candles": 2,
       "favorites": {
-        "foods": ["pan de muerto", "champurrado", "mole poblano"],
-        "songs": ["Cielito Lindo"],
-        "flowers": ["cempasúchil (marigolds)"]
+        "foods": [
+          "pan de muerto",
+          "champurrado",
+          "mole poblano"
+        ],
+        "songs": [
+          "Cielito Lindo"
+        ],
+        "flowers": [
+          "cempasúchil (marigolds)"
+        ]
       },
       "stories": [
         {
@@ -20,9 +30,19 @@
           "title": "Marigold petals to the door",
           "text": "She always scattered marigold petals from the garden gate to the front door so the spirits would find their way home. She said the smell was a map only the dead could read.",
           "added": "2026-10-20"
+        },
+        {
+          "title": "Singing over the comal",
+          "text": "While she patted tortillas she sang Cielito Lindo, always a little off key, and made the grandchildren sing the chorus back to her. Whoever got the words wrong had to flip the next tortilla.",
+          "added": "2026-10-21"
+        },
+        {
+          "title": "The red notebook",
+          "text": "She kept every recipe in a red notebook stained with oil and cinnamon. She never wrote down the amounts, only little notes like 'until it smells like Sunday'. Her granddaughter still cooks from it and still cannot get the mole quite right.",
+          "added": "2026-10-22"
         }
       ],
-      "remembrance": "Abuela Rosa filled every November with mole, laughter and marigold petals. Even when dinner burned, she began again and fed everyone at midnight. Tonight a trail of petals lights the way home, and pan de muerto waits on the table for her."
+      "remembrance": "Abuela Rosa filled every November with mole, laughter and marigold petals. Even when dinner burned, she began again and fed everyone at midnight. She sang a little off key, kept her recipes in a red notebook measured in 'until it smells like Sunday', and lit the way home for the people she loved. Tonight a trail of petals leads to her door, and pan de muerto waits on the table."
     }
   ]
 }
