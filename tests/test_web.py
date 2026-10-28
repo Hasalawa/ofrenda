@@ -84,3 +84,35 @@ def test_rejects_foreign_host_and_bad_input(base):
     assert call(base + "/api/person", {"name": ""})[0] == 400
     assert call(base + "/api/person", {"name": "X", "photo": "data:text/html;base64,AAA"})[0] == 400
     assert call(base + "/api/story", {"slug": "nobody", "text": "x"})[0] == 404
+
+
+def test_transcribe_endpoint(base, monkeypatch):
+    from ofrenda import stt
+
+    monkeypatch.setattr(stt, "transcribe", lambda wav: "hello " + str(len(wav)))
+    audio = "data:audio/wav;base64,AAAA"
+    assert call(base + "/api/transcribe", {"audio": audio}) == (200, '{"text": "hello 3"}')
+    assert call(base + "/api/transcribe", {"audio": "nope"})[0] == 400
+
+
+def test_transcribe_reports_missing_whisper(base, monkeypatch):
+    from ofrenda import stt
+
+    def missing(wav):
+        raise stt.STTUnavailable("Voice calls need Whisper. Run: pip install faster-whisper")
+
+    monkeypatch.setattr(stt, "transcribe", missing)
+    s, b = call(base + "/api/transcribe", {"audio": "data:audio/wav;base64,AAAA"})
+    assert s == 501 and "faster-whisper" in b
+
+
+def test_spoken_prompt_is_short_and_follow_ups_keep_context():
+    from ofrenda import cli
+
+    person = json.loads(DEMO.read_text(encoding="utf-8"))["people"][0]
+    first = cli.ask_prompt(person, "what happened with the mole", spoken=True)
+    assert "phone call" in first and "three short sentences" in first
+    history = [{"who": "me", "text": "what happened with the mole"}, {"who": "ai", "text": "It burned."}]
+    follow = cli.ask_prompt(person, "and then?", history=history)
+    assert follow and "forgot the chocolate" in follow and "Companion: It burned." in follow
+    assert cli.ask_prompt(person, "stock market") is None

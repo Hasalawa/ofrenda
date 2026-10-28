@@ -54,16 +54,38 @@ def remember(person: dict) -> str:
     return " ".join(bits)
 
 
-def ask_prompt(person: dict, question: str) -> str | None:
+def _recent(history) -> list[tuple[str, str]]:
+    out = []
+    for item in history or []:
+        if isinstance(item, dict) and item.get("who") in ("me", "ai"):
+            out.append((item["who"], str(item.get("text", ""))[:400]))
+    return out[-6:]
+
+
+def ask_prompt(person: dict, question: str, spoken: bool = False, history=None) -> str | None:
     """Build the grounded prompt, or None when no story is relevant."""
+    recent = _recent(history)
+    last_q = next((t for who, t in reversed(recent) if who == "me"), "")
     hits = retrieve.top_stories(person, question)
+    if last_q and (not hits or not retrieve.tokens(question)):
+        hits = retrieve.top_stories(person, last_q) or hits  # a follow-up like "and then?"
     if not hits:
         return None
     context = "\n\n".join(f"{s['title']}: {s['text']}" for s in hits)
     relation = f" ({person['relation']})" if person.get("relation") else ""
+    chat = ""
+    if recent:
+        lines = [("Visitor" if who == "me" else "Companion") + ": " + t for who, t in recent]
+        chat = "Conversation so far:\n" + "\n".join(lines) + "\n\n"
+    style = (
+        "\nReply as if speaking aloud on a phone call: warm and natural, at most three short "
+        "sentences, no lists, no markdown."
+        if spoken
+        else ""
+    )
     return (
-        f"Stories about {person['name']}{relation}:\n\n{context}\n\nQuestion: {question}\n"
-        "Answer using only these stories. If they do not answer it, say so."
+        f"Stories about {person['name']}{relation}:\n\n{context}\n\n{chat}Question: {question}\n"
+        f"Answer using only these stories. If they do not answer it, say so.{style}"
     )
 
 

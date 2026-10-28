@@ -15,11 +15,13 @@ import webbrowser
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
-from . import cli, llm, store
+from . import cli, llm, store, stt
 from .page import PAGE
 
 MAX_BODY = 8 * 1024 * 1024
 MAX_PHOTO = 6 * 1024 * 1024
+WAV_RE = re.compile(r"^data:audio/(?:x-)?wav;base64,([A-Za-z0-9+/=]+)$")
+MAX_WAV = 4 * 1024 * 1024
 PHOTO_RE = re.compile(r"^data:image/(png|jpeg|webp|gif);base64,([A-Za-z0-9+/=]+)$")
 EXT = {"png": "png", "jpeg": "jpg", "webp": "webp", "gif": "gif"}
 ALLOWED_HOSTS = {"localhost", "127.0.0.1", "[::1]"}
@@ -88,7 +90,36 @@ class App:
         return [self.public(p) for p in store.load(self.path)["people"]]
 
     def info(self) -> dict:
-        return {"model": llm.model_name(), "ai": llm.is_online()}
+        return {
+            "model": llm.model_name(),
+            "ai": llm.is_online(),
+            "stt": stt.available(),
+            "stt_model": stt.model_name(),
+        }
+
+    def warmup(self, body: dict) -> dict:
+        try:
+            stt.warmup()
+        except stt.STTUnavailable as exc:
+            raise ApiError(501, str(exc)) from None
+        return {"ok": True}
+
+    def transcribe(self, body: dict) -> dict:
+        match = WAV_RE.match(str(body.get("audio") or ""))
+        if not match:
+            raise ApiError(400, "Send 16 kHz mono WAV audio")
+        try:
+            raw = base64.b64decode(match.group(1), validate=True)
+        except (binascii.Error, ValueError):
+            raise ApiError(400, "Could not read that audio") from None
+        if len(raw) > MAX_WAV:
+            raise ApiError(413, "That recording is too long")
+        try:
+            return {"text": stt.transcribe(raw)}
+        except stt.STTUnavailable as exc:
+            raise ApiError(501, str(exc)) from None
+        except Exception as exc:  # noqa: BLE001 - decoding errors from the audio library
+            raise ApiError(422, f"Could not understand that audio: {exc}") from None
 
     def add_person(self, body: dict) -> dict:
         name = _text(body, "name", 80, required=True)
@@ -150,7 +181,8 @@ class App:
         question = _text(body, "question", 500, required=True)
         with self.lock:
             person = self._person(store.load(self.path), body.get("slug"))
-        prompt = cli.ask_prompt(person, question)
+        history = body.get("history") if isinstance(body.get("history"), list) else None
+        prompt = cli.ask_prompt(person, question, spoken=bool(body.get("spoken")), history=history)
         if prompt is None:
             yield f"I have no story about that for {person['name']} yet. Add one and ask again."
             return
@@ -173,6 +205,8 @@ def make_handler(app: App):
         "/api/fav": app.add_fav,
         "/api/candle": app.light_candle,
         "/api/remember": app.remember,
+        "/api/transcribe": app.transcribe,
+        "/api/warmup": app.warmup,
     }
 
     class Handler(BaseHTTPRequestHandler):

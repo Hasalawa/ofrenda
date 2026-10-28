@@ -28,7 +28,7 @@ I read "Ghost in the Machine" gently: not a ghost that haunts, but the people wh
 - **Model:** any open-weight model served by [Ollama](https://ollama.com) (default `llama3.2:3b`, switch with `OFRENDA_MODEL`).
 - **Retrieval:** a tiny keyword matcher over your stories, so a 3B model on a laptop only sees what matters.
 - **Web app:** a zero-dependency Python server bound to `127.0.0.1` with a streaming `/api/ask`, and a single offline HTML page (no CDN, no tracking).
-- **Voice (optional):** `faster-whisper` transcribes a recorded family story fully offline.
+- **Voice calls:** press 📞 and just talk. A small voice-activity detector in the browser finds the end of each sentence, `faster-whisper` (Whisper) transcribes it locally, and the model's answer is spoken sentence by sentence while it is still streaming. Nothing goes to a speech API.
 - **Core:** Python standard library only, one JSON file for data, one HTML file for output.
 - **Graceful fallback:** with no model running, `remember` and `ask` still work using templates and your own stories.
 - **CI/CD:** GitHub Actions for lint and tests on Python 3.10 to 3.13, packaged releases on tags, and the demo page deployed to GitHub Pages.

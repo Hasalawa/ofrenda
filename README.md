@@ -25,6 +25,18 @@ flickering candles. Click someone to **talk** with a gentle AI companion (answer
 and can be read aloud), browse their **stories**, add **offerings**, and light a candle. The server
 only listens on `127.0.0.1`, so nothing leaves your computer.
 
+### Talk by voice (like a phone call)
+
+```bash
+pip install faster-whisper     # open-source Whisper, runs on your computer
+ofrenda serve                  # then press the 📞 button next to the message box
+```
+
+Just speak. When you pause, Whisper turns your words into text **on your machine**, the local model
+answers, and the answer is spoken sentence by sentence while it is still being written. Tap the
+picture to interrupt. The first call downloads a small speech model once (about 150 MB); after that
+it works with no internet. Change the model with `OFRENDA_STT_MODEL` (for example `small.en`).
+
 ## Quick start
 
 ```bash

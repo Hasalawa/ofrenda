@@ -129,6 +129,39 @@ button.chip{cursor:pointer}button.chip:hover{background:#ffb00044}
 .btn.ghost{background:none;color:var(--gold);border:1px solid var(--gold)}
 .toggle{display:flex;align-items:center;gap:.4rem;font-size:.85rem;color:var(--muted);cursor:pointer}
 
+/* voice call */
+.callBtn{background:#3a1d5a;border:1px solid #ffb00077;border-radius:50%;width:42px;height:42px;flex:none;cursor:pointer;font-size:1.1rem}
+.callBtn:hover{background:#ffb00033}
+.call{position:absolute;inset:0;z-index:20;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.35rem;
+ padding:1.2rem 1.2rem 1.6rem;text-align:center;background:radial-gradient(90% 60% at 50% 30%,#4a2272,#1a0c2c 70%,#0d0618)}
+.call small{letter-spacing:.2em;text-transform:uppercase;color:var(--muted);font-size:.72rem}
+.call h2{margin:.5rem 0 0;color:var(--gold);font-weight:normal;font-size:1.6rem}
+.clock{color:var(--muted);font-variant-numeric:tabular-nums}
+.callAvatar{position:relative;width:190px;height:190px;margin:1rem 0 .4rem;display:grid;place-items:center}
+.avatarBig{position:relative;width:150px;height:150px;border-radius:50%;border:5px solid var(--gold);overflow:hidden;cursor:pointer;
+ background:#241239;display:grid;place-items:center;font-size:4rem;box-shadow:0 0 40px #ffb00066;transition:box-shadow .3s,border-color .3s}
+.avatarBig img{width:100%;height:100%;object-fit:cover}
+.ring{position:absolute;inset:10px;border-radius:50%;border:2px solid #ffb00066;opacity:0}
+.call.listening .ring{animation:ring 2.6s ease-out infinite}.call.listening .r2{animation-delay:1.3s}
+.call.hearing .ring{animation:ring 1s ease-out infinite;border-color:#7bc74dbb}.call.hearing .r2{animation-delay:.5s}
+.call.hearing .avatarBig{border-color:var(--green);box-shadow:0 0 50px #7bc74d88}
+.call.speaking .avatarBig{animation:talk .55s ease-in-out infinite alternate}
+.call.thinking .avatarBig{animation:think 1.4s ease-in-out infinite}
+@keyframes ring{0%{transform:scale(.8);opacity:.9}100%{transform:scale(1.35);opacity:0}}
+@keyframes talk{from{box-shadow:0 0 30px #ffb00055}to{box-shadow:0 0 85px 12px #ffb000aa;transform:scale(1.03)}}
+@keyframes think{0%,100%{opacity:.7}50%{opacity:1;box-shadow:0 0 60px #e0357a88}}
+.cstate{font-size:1.1rem;min-height:1.6em;color:var(--paper)}
+.heard{font-style:italic;color:var(--muted);min-height:2.6em;max-width:88%;line-height:1.4}
+.said{max-height:7.5em;overflow-y:auto;max-width:92%;line-height:1.5;background:#ffffff0d;border-radius:12px;padding:.6rem .9rem;
+ font-size:.98rem;display:none}
+.said.on{display:block}
+.ctrl{display:flex;gap:1.4rem;margin-top:.8rem;align-items:center}
+.cbtn{width:58px;height:58px;border-radius:50%;border:1px solid #ffffff44;background:#ffffff14;font-size:1.4rem;cursor:pointer}
+.cbtn.on{background:#e0357a55;border-color:var(--pink)}
+.cbtn.end{width:68px;height:68px;background:#d62b4b;border-color:#d62b4b;font-size:1.6rem}
+.cbtn:hover{filter:brightness(1.2)}
+.vsel{margin-top:.8rem;background:#2a1445;border:1px solid #ffffff33;border-radius:10px;padding:.35rem .6rem;max-width:90%;font-size:.85rem}
+
 /* stories / offerings */
 .quote{border-left:4px solid var(--orange);background:#ffffff0d;border-radius:0 12px 12px 0;padding:.8rem 1rem;
  font-size:1.05rem;line-height:1.6;margin:0 0 .6rem;font-style:italic}
@@ -200,8 +233,8 @@ function h(tag,props={},...kids){const e=document.createElement(tag);
 let people=[],current=null,tab="talk",voiceOn=false,busy=false;
 const chats={};   // slug -> [{who,text}]
 
-async function api(path,body){
- const r=await fetch(path,body?{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)}:undefined);
+async function api(path,body,signal){
+ const r=await fetch(path,body?{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body),signal}:undefined);
  if(!r.ok){let m="Something went wrong";try{m=(await r.json()).error||m}catch(e){}throw new Error(m)}
  return r}
 async function refresh(){people=await (await api("/api/people")).json()}
@@ -258,7 +291,7 @@ function renderAltar(){const a=$("#altar");a.replaceChildren();
 const person=()=>people.find(p=>p.slug===current);
 function openDrawer(slug,t){current=slug;tab=t||"talk";renderDrawer();
  $("#drawer").classList.add("open");$("#scrim").classList.add("open");$("#drawer").setAttribute("aria-hidden","false")}
-function closeDrawer(){$("#drawer").classList.remove("open");$("#scrim").classList.remove("open");speechSynthesis&&speechSynthesis.cancel()}
+function closeDrawer(){endCall();$("#drawer").classList.remove("open");$("#scrim").classList.remove("open");speechSynthesis&&speechSynthesis.cancel()}
 $("#scrim").onclick=closeDrawer;addEventListener("keydown",e=>{if(e.key==="Escape")closeDrawer()});
 
 function renderDrawer(){const p=person();if(!p)return;const d=$("#drawer");d.replaceChildren(
@@ -284,23 +317,113 @@ function composer(p){const inp=h("input",{id:"q",placeholder:`Ask about ${first(
  inp.addEventListener("keydown",e=>{if(e.key==="Enter"&&inp.value.trim()){send(inp.value.trim());inp.value=""}});
  return h("div",{class:"composer"},
   h("label",{class:"toggle",title:"Read answers aloud"},h("input",{type:"checkbox",checked:voiceOn,onchange:e=>{voiceOn=e.target.checked;if(!voiceOn)speechSynthesis.cancel()}}),"\u{1F50A}"),
+  h("button",{class:"callBtn",title:"Talk by voice","aria-label":"Start a voice call",onclick:startCall},"\u{1F4DE}"),
   inp,h("button",{class:"btn",id:"sendBtn",onclick:()=>{if(inp.value.trim()){send(inp.value.trim());inp.value=""}}},"Ask"))}
 function addMsg(box,who,text,canSpeak){const bub=h("div",{class:"bubble"},text);
  const row=h("div",{class:"msg "+who},who==="ai"?h("div",{class:"orb"}):null,bub,
   canSpeak&&who==="ai"?h("button",{class:"say",title:"Listen",onclick:()=>speak(bub.textContent)},"\u{1F50A}"):null);
  box.append(row);return {row,bub}}
-async function send(text){if(busy)return;const p=person();const log=chats[p.slug]||(chats[p.slug]=[]);
+async function send(text,spoken){if(busy)return;const p=person();const log=chats[p.slug]||(chats[p.slug]=[]);
  const b=$("#dbody");b.querySelector(".chips")?.remove();const box=$("#msgs");
- log.push({who:"me",text});addMsg(box,"me",text);
+ const history=log.slice(-6);log.push({who:"me",text});addMsg(box,"me",text);
  const {row,bub}=addMsg(box,"ai","",false);bub.replaceChildren(h("span",{class:"dots"},h("span"),h("span"),h("span")));
  b.scrollTop=b.scrollHeight;busy=true;$("#sendBtn")&&($("#sendBtn").disabled=true);let full="";
- try{const r=await api("/api/ask",{slug:p.slug,question:text});const rd=r.body.getReader(),dec=new TextDecoder();
-  for(;;){const {done,value}=await rd.read();if(done)break;full+=dec.decode(value,{stream:true});bub.textContent=full;b.scrollTop=b.scrollHeight}
- }catch(e){full="I could not answer just now. "+e.message;bub.textContent=full}
+ const c=spoken?call:null,sp=c?makeSpeaker(()=>call===c&&setState("speaking")):null;
+ if(c){c.speaker=sp;c.ctl=new AbortController()}
+ try{const r=await api("/api/ask",{slug:p.slug,question:text,history,spoken:!!spoken},c&&c.ctl.signal);const rd=r.body.getReader(),dec=new TextDecoder();
+  for(;;){const {done,value}=await rd.read();if(done)break;const piece=dec.decode(value,{stream:true});full+=piece;bub.textContent=full;b.scrollTop=b.scrollHeight;
+   if(sp){sp.feed(piece);const sd=$("#said");if(sd){sd.classList.add("on");sd.textContent=full;sd.scrollTop=sd.scrollHeight}}}
+  if(sp){sp.end();await sp.done}
+ }catch(e){if(e.name==="AbortError"){full=full||"(interrupted)"}else{full="I could not answer just now. "+e.message;bub.textContent=full;sp&&sp.cancel()}}
  finally{busy=false;$("#sendBtn")&&($("#sendBtn").disabled=false)}
  log.push({who:"ai",text:full});
  row.append(h("button",{class:"say",title:"Listen",onclick:()=>speak(full)},"\u{1F50A}"));
- if(voiceOn)speak(full)}
+ if(voiceOn&&!spoken)speak(full)}
+
+/* ---------- voice call (Whisper listens, local voice speaks) ---------- */
+let call=null,info={};
+const SENT=/^([\s\S]*?[.!?\u2026]+["')\]]*)\s+([\s\S]*)$/;
+const enVoices=()=>("speechSynthesis" in window?speechSynthesis.getVoices():[]).filter(v=>/^en/i.test(v.lang));
+function pickVoice(){let name="";try{name=localStorage.getItem("ofrenda-voice")||""}catch(e){}
+ const vs=enVoices();return vs.find(v=>v.name===name)||vs.find(v=>v.localService)||vs[0]||null}
+function makeSpeaker(onStart){let q=[],playing=false,closed=false,dead=false,buf="",finish;const done=new Promise(r=>finish=r);
+ const check=()=>{if(closed&&!playing&&!q.length)finish()};
+ function pump(){if(playing||dead)return;const t=q.shift();if(t===undefined){check();return}
+  playing=true;let over=false;
+  const end=()=>{if(over)return;over=true;clearTimeout(wd);playing=false;pump()};
+  const wd=setTimeout(end,3000+t.length*110);   // a stuck voice must never freeze the call
+  onStart&&onStart();
+  if(!("speechSynthesis" in window)||!enVoices().length){setTimeout(end,Math.min(7000,t.length*55));return}
+  const u=new SpeechSynthesisUtterance(t),v=pickVoice();if(v){u.voice=v;u.lang=v.lang}else u.lang="en-US";
+  u.rate=.96;u.onend=end;u.onerror=end;speechSynthesis.speak(u)}
+ const say=raw=>{const t=raw.replace(/[*_#`>]/g,"").trim();if(t&&!dead){q.push(t);pump()}};
+ return {feed(s){buf+=s;let m;while((m=buf.match(SENT))){say(m[1]);buf=m[2]}},
+  end(){say(buf);buf="";closed=true;check()},done,
+  cancel(){dead=true;q=[];closed=true;playing=false;("speechSynthesis" in window)&&speechSynthesis.cancel();finish()}}}
+
+function setState(s,msg){if(!call)return;call.state=s;const o=$("#call");if(!o)return;o.className="call "+s;
+ const label={preparing:"Getting ready\u2026",listening:"Listening\u2026",hearing:"I hear you\u2026",thinking:"Thinking\u2026",speaking:"Speaking\u2026"}[s]||"";
+ $("#cstate").textContent=msg||label}
+function buildCall(p){const sel=h("select",{class:"vsel","aria-label":"Voice",onchange:e=>{try{localStorage.setItem("ofrenda-voice",e.target.value)}catch(er){}}});
+ const fill=()=>{const cur=pickVoice();sel.replaceChildren(...enVoices().map(v=>h("option",{value:v.name,selected:cur&&cur.name===v.name},v.name+(v.localService?"":" (online)"))));sel.style.display=enVoices().length?"":"none"};
+ fill();if("speechSynthesis" in window)speechSynthesis.onvoiceschanged=fill;
+ const mute=h("button",{class:"cbtn",title:"Mute",onclick:()=>{call.muted=!call.muted;mute.classList.toggle("on",call.muted);mute.textContent=call.muted?"\u{1F507}":"\u{1F3A4}"}},"\u{1F3A4}");
+ const o=h("div",{class:"call preparing",id:"call"},h("small",{},"Ofrenda voice call"),
+  h("div",{class:"callAvatar"},h("div",{class:"ring"}),h("div",{class:"ring r2"}),
+   h("div",{class:"avatarBig",title:"Tap to interrupt",onclick:interrupt},p.photo_url?h("img",{src:p.photo_url,alt:""}):"\u{1F33C}")),
+  h("h2",{},p.name),h("div",{class:"clock",id:"clock"},"00:00"),h("div",{class:"cstate",id:"cstate"}),
+  h("div",{class:"heard",id:"heard"}),h("div",{class:"said",id:"said"}),
+  h("div",{class:"ctrl"},mute,h("button",{class:"cbtn end",title:"End call",onclick:endCall},"\u{1F4DE}")),sel);
+ $("#drawer").append(o)}
+function interrupt(){if(!call||call.state!=="speaking")return;call.speaker&&call.speaker.cancel();call.ctl&&call.ctl.abort()}
+const clock=()=>{const s=Math.floor((Date.now()-call.t0)/1000),e=$("#clock");if(e)e.textContent=String(s/60|0).padStart(2,"0")+":"+String(s%60).padStart(2,"0")};
+
+async function startCall(){if(call||busy)return;const p=person();
+ if(!info.stt)return toast("Voice calls need Whisper. In your terminal run: pip install faster-whisper (then restart Ofrenda).");
+ if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia)return toast("This browser cannot use the microphone here");
+ let stream;try{stream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true,autoGainControl:true}})}
+ catch(e){return toast("Microphone blocked. Click the lock icon in the address bar and allow it.")}
+ const AC=window.AudioContext||window.webkitAudioContext,ac=new AC();ac.resume&&ac.resume();
+ const src=ac.createMediaStreamSource(stream),proc=ac.createScriptProcessor(4096,1,1),sink=ac.createGain();sink.gain.value=0;
+ src.connect(proc);proc.connect(sink);sink.connect(ac.destination);
+ call={p,stream,ac,src,proc,sink,state:"preparing",muted:false,floor:.01,loud:0,pre:[],chunks:[],voiced:0,t0:Date.now(),ctl:null,speaker:null,tick:setInterval(()=>call&&clock(),1000)};
+ const me=call;buildCall(p);setState("preparing","Getting ready (the first time downloads a small speech model)\u2026");proc.onaudioprocess=onFrame;
+ try{await api("/api/warmup",{})}catch(e){if(call===me){toast(e.message);endCall()}return}
+ if(call!==me)return;
+ const sp=makeSpeaker(()=>call===me&&setState("speaking"));me.speaker=sp;
+ sp.feed(`Hello. I'm here. Ask me anything about ${first(p)}. `);sp.end();await sp.done;
+ if(call===me)resume()}
+function resume(delay=350){const c=call;if(!c)return;c.state="thinking";
+ setTimeout(()=>{if(call!==c)return;c.loud=0;c.pre=[];c.chunks=[];c.voiced=0;setState("listening")},delay)}
+function onFrame(ev){const c=call;if(!c||c.muted||(c.state!=="listening"&&c.state!=="hearing"))return;
+ const x=ev.inputBuffer.getChannelData(0);let s=0;for(let i=0;i<x.length;i++)s+=x[i]*x[i];
+ const rms=Math.sqrt(s/x.length),now=performance.now(),copy=new Float32Array(x),thr=Math.max(.02,c.floor*3);
+ if(rms<thr/1.5)c.floor=c.floor*.9+rms*.1;
+ if(c.state==="listening"){c.pre.push(copy);if(c.pre.length>4)c.pre.shift();c.loud=rms>thr?c.loud+1:0;
+  if(c.loud>=2){c.chunks=c.pre;c.pre=[];c.lastVoice=c.start=now;c.voiced=0;setState("hearing")}}
+ else{c.chunks.push(copy);if(rms>thr){c.lastVoice=now;c.voiced+=x.length/c.ac.sampleRate}
+  if(now-c.lastVoice>1100||now-c.start>25000)finishTurn(c)}}
+async function finishTurn(c){const chunks=c.chunks;c.chunks=[];
+ if(c.voiced<.35){c.state="listening";c.loud=0;setState("listening");return}   // a cough or a click
+ setState("thinking");
+ try{const r=await (await api("/api/transcribe",{audio:toWav(chunks,c.ac.sampleRate)})).json();if(call!==c)return;
+  const text=(r.text||"").trim();
+  if(text.replace(/[^\w]/g,"").length<2){$("#heard").textContent="";return resume(100)}
+  $("#heard").textContent="\u201C"+text+"\u201D";await send(text,true)}
+ catch(e){if(call!==c)return;toast(e.message);return endCall()}
+ if(call===c)resume()}
+function toWav(chunks,sr){let n=0;chunks.forEach(c=>n+=c.length);const all=new Float32Array(n);let o=0;chunks.forEach(c=>{all.set(c,o);o+=c.length});
+ const R=16000,m=Math.floor(n*R/sr),pcm=new Int16Array(m),ratio=sr/R;
+ for(let i=0;i<m;i++){const p=i*ratio,i0=p|0,f=p-i0,a=all[i0],b=all[Math.min(i0+1,n-1)],v=Math.max(-1,Math.min(1,a+(b-a)*f));pcm[i]=v<0?v*32768:v*32767}
+ const buf=new ArrayBuffer(44+m*2),dv=new DataView(buf),w=(at,str)=>{for(let i=0;i<str.length;i++)dv.setUint8(at+i,str.charCodeAt(i))};
+ w(0,"RIFF");dv.setUint32(4,36+m*2,true);w(8,"WAVEfmt ");dv.setUint32(16,16,true);dv.setUint16(20,1,true);dv.setUint16(22,1,true);
+ dv.setUint32(24,R,true);dv.setUint32(28,R*2,true);dv.setUint16(32,2,true);dv.setUint16(34,16,true);w(36,"data");dv.setUint32(40,m*2,true);
+ new Int16Array(buf,44,m).set(pcm);const u=new Uint8Array(buf);let s="";for(let i=0;i<u.length;i+=0x8000)s+=String.fromCharCode.apply(null,u.subarray(i,i+0x8000));
+ return "data:audio/wav;base64,"+btoa(s)}
+function endCall(){const c=call;if(!c)return;call=null;clearInterval(c.tick);
+ try{c.speaker&&c.speaker.cancel();c.ctl&&c.ctl.abort();("speechSynthesis" in window)&&speechSynthesis.cancel()}catch(e){}
+ try{c.proc.onaudioprocess=null;c.proc.disconnect();c.src.disconnect();c.stream.getTracks().forEach(t=>t.stop());c.ac.close()}catch(e){}
+ $("#call")&&$("#call").remove();busy=false;const b=$("#dbody");if(b)b.scrollTop=b.scrollHeight}
 
 /* stories */
 function renderStories(p){const b=$("#dbody");
@@ -346,8 +469,8 @@ $("#addForm").onsubmit=async e=>{e.preventDefault();const go=$("#addGo");go.disa
  catch(er){toast(er.message)}finally{go.disabled=false}};
 
 (async()=>{try{await refresh();renderAltar()}catch(e){toast(e.message)}
- try{const i=await (await api("/api/info")).json();$("#dot").className="dot "+(i.ai?"on":"off");
-  $("#status").textContent=i.ai?`Local AI ready · ${i.model}`:"AI not running: answers will use simple templates"}
+ try{info=await (await api("/api/info")).json();const i=info;$("#dot").className="dot "+(i.ai?"on":"off");
+  $("#status").textContent=(i.ai?`Local AI ready · ${i.model}`:"AI not running: answers will use simple templates")+(i.stt?" · voice calls ready":"")}
  catch(e){$("#status").textContent="offline"}})();
 </script></body></html>
 """
